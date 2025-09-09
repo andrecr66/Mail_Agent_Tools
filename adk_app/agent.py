@@ -38,6 +38,7 @@ Flow:
    When the user approves, call `deliver_mail` with `mode` set to the choice.
    Never send without explicit approval.
 5) Summarize results (subject + key changes). Avoid dumping full HTML unless asked.
+   Tools only return `subject`, `text`, `plan`, and counts by default; HTML is omitted unless env `INCLUDE_HTML_IN_PREVIEW=1` is set.
 
 Error handling with tools:
 - The tools may return an object with `ok: false`, `status_code`, and an `error_json.detail` list if the API rejects the payload.

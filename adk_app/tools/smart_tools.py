@@ -127,13 +127,51 @@ def _ensure_defaults(base: Dict[str, Any]) -> Dict[str, Any]:
 
 
 async def smart_preview(base: Dict[str, Any]) -> Dict[str, Any]:
-    return await preview_mail(_ensure_defaults(base))
+    data = await preview_mail(_ensure_defaults(base))
+    # If the backend surfaced an HTTP error payload, return it directly
+    if isinstance(data, dict) and data.get("ok") is False:
+        return data
+    subject = data.get("subject", "")
+    text = data.get("text", "")
+    plan = data.get("plan", {})
+    html = data.get("html", "")
+    out: Dict[str, Any] = {
+        "ok": True,
+        "subject": subject,
+        "text": text,
+        "plan": plan,
+        "word_count": len(str(text).split()),
+        "html_len": len(str(html)),
+        "html_included": bool(os.getenv("INCLUDE_HTML_IN_PREVIEW")),
+    }
+    # Only include full HTML if explicitly requested via env
+    if os.getenv("INCLUDE_HTML_IN_PREVIEW"):
+        out["html"] = html
+    return out
 
 
 async def smart_preview_nl(base: Dict[str, Any], instructions: str) -> Dict[str, Any]:
     # still ensure sensible defaults before NL iteration
     seeded = _ensure_defaults(base)
-    return await preview_mail_nl(seeded, instructions)
+    data = await preview_mail_nl(seeded, instructions)
+    if isinstance(data, dict) and data.get("ok") is False:
+        return data
+    subject = data.get("subject", "")
+    text = data.get("text", "")
+    plan = data.get("plan", {})
+    html = data.get("html", "")
+    out: Dict[str, Any] = {
+        "ok": True,
+        "subject": subject,
+        "text": text,
+        "plan": plan,
+        "word_count": len(str(text).split()),
+        "html_len": len(str(html)),
+        "html_included": bool(os.getenv("INCLUDE_HTML_IN_PREVIEW")),
+    }
+    if os.getenv("INCLUDE_HTML_IN_PREVIEW"):
+        out["html"] = html
+    return out
 
 
 async def smart_deliver(
