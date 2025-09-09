@@ -71,8 +71,6 @@ def render_generic_email(
             lines.append(f"Hi {name} — welcome! We’re happy you’re here.")
         else:  # friendly or default
             lines.append(f"Hi {name} — welcome! We're thrilled to have you.")
-        else:
-            lines.append(f"Hi {name}, welcome!")
         if bullets:
             lines.append("To make your first days smooth, here are a few quick wins:")
             for b in bullets[:4]:
