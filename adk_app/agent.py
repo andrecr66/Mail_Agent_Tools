@@ -38,6 +38,12 @@ Flow:
    When the user approves, call `deliver_mail` with `mode` set to the choice.
    Never send without explicit approval.
 5) Summarize results (subject + key changes). Avoid dumping full HTML unless asked.
+
+Error handling with tools:
+- The tools may return an object with `ok: false`, `status_code`, and an `error_json.detail` list if the API rejects the payload.
+- If you see `status_code=422` or `ok=false`, ask the user for the missing fields and retry once:
+  • At minimum the API requires recipient email. Name is optional (you can reuse the email as the name).
+  • If the user gave a flat email (e.g., `andre@example.com`), proceed; the backend normalizes it.
 """
 
 root_agent = LlmAgent(
