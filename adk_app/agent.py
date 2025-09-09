@@ -28,13 +28,14 @@ Flow:
 3) If the user requests changes, call preview again with updates:
    - bullets_replace / bullets_add
    - cta_text / cta_url
-   - purpose
+   - purpose / subject / tone / long_form
    Edge cases handled by backend:
      • No bullets → “Thanks for connecting with us!”
      • Missing name → greet by email
      • No CTA → HTML still valid
-4) Only when the user explicitly approves, call `deliver_mail` with mode="draft".
-   Do NOT use mode="send" unless the user insists.
+4) Before delivery, explicitly ask: “Draft to Gmail or Send now?” Default to "draft".
+   When the user approves, call `deliver_mail` with `mode` set to the choice.
+   Never send without explicit approval.
 5) Summarize results (subject + key changes). Avoid dumping full HTML unless asked.
 """
 
