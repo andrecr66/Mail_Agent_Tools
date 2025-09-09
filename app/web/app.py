@@ -6,6 +6,9 @@ from app.agents.types import DraftRequest, DraftResponse
 from app.mail.types import PreviewResponse, SendResult
 from app.mail.workflow import preview as wf_preview, deliver as wf_deliver
 from app.web.cors import install_cors
+from pydantic import BaseModel
+from typing import Any, Dict
+
 
 app = FastAPI(title="Mail Agent Tools - Draft API")
 install_cors(app)
@@ -57,7 +60,6 @@ def get_settings() -> dict[str, str]:
         "MAIL_AGENT_BRAND_ID": settings.MAIL_AGENT_BRAND_ID,
     }
 
-from pydantic import BaseModel
 
 # ---------- Iteration endpoints for chat-driven review/approval ----------
 class DraftUpdate(BaseModel):
@@ -67,6 +69,7 @@ class DraftUpdate(BaseModel):
     cta_text: str | None = None
     cta_url: str | None = None
     purpose: str | None = None
+
 
 def _apply_updates(base: DraftRequest, updates: DraftUpdate) -> DraftRequest:
     ctx = dict(base.context or {})
@@ -84,13 +87,46 @@ def _apply_updates(base: DraftRequest, updates: DraftUpdate) -> DraftRequest:
     base.context = ctx
     return base
 
+
 @app.post("/draft/iterate", response_model=DraftResponse)
 def draft_iterate(base: DraftRequest, updates: DraftUpdate) -> DraftResponse:
     req2 = _apply_updates(base, updates)
     return _agent.draft(req2)
+
 
 @app.post("/draft/iterate/preview", response_model=PreviewResponse)
 def draft_iterate_preview(base: DraftRequest, updates: DraftUpdate) -> PreviewResponse:
     req2 = _apply_updates(base, updates)
     data = wf_preview(req2)
     return PreviewResponse(**data)
+
+
+@app.post("/mail/iterate/deliver")
+def mail_iterate_deliver(
+    base: DraftRequest,
+    updates: DraftUpdate,
+    mode: str = "draft",
+) -> Dict[str, Any]:
+    req2 = _apply_updates(base, updates)
+    data = wf_deliver(req2, force_action=mode)
+    return data
+
+
+from pydantic import BaseModel
+from app.agents.interpret import interpret_instructions
+
+class NLUpdate(BaseModel):
+    instructions: str
+
+@app.post("/draft/iterate/nl", response_model=PreviewResponse)
+def draft_iterate_nl(base: DraftRequest, updates: NLUpdate) -> PreviewResponse:
+    parsed = interpret_instructions(updates.instructions)
+    req2 = _apply_updates(base, DraftUpdate(**parsed))
+    data = wf_preview(req2)
+    return PreviewResponse(**data)
+
+@app.post("/mail/iterate/nl-deliver")
+def mail_iterate_nl_deliver(base: DraftRequest, updates: NLUpdate, mode: str = "draft") -> Dict[str, Any]:
+    parsed = interpret_instructions(updates.instructions)
+    req2 = _apply_updates(base, DraftUpdate(**parsed))
+    return wf_deliver(req2, force_action=mode)
