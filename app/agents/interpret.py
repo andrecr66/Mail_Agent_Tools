@@ -7,9 +7,53 @@ from typing import Any, Dict, List
 
 _BULLET_SPLIT = re.compile(r"[;,]\s*")
 
+DEFAULT_BY_PURPOSE: Dict[str, List[str]] = {
+    "welcome": [
+        "Get started quickly with our docs and templates",
+        "Book a 15-min onboarding call if you'd like a walkthrough",
+        "Explore examples to see best practices in action",
+        "Join our community forum for tips and support",
+    ],
+    "newsletter": [
+        "Highlights from this week's releases",
+        "Upcoming webinars and office hours",
+        "Customer stories and how-tos you may like",
+    ],
+    "promo": [
+        "Limited-time discount for new users",
+        "Bundle offer for teams getting started",
+        "Early access to upcoming features",
+    ],
+    "outreach": [
+        "Short intro on how we can help your team",
+        "Two relevant use cases seen in your industry",
+        "Offer to share a tailored demo or example",
+    ],
+    "notice": [
+        "Summary of the change and when it takes effect",
+        "What you need to do (if anything)",
+        "Links to the full details and support",
+    ],
+    "maintenance": [
+        "Maintenance window and expected impact",
+        "What services are affected",
+        "Where to track status in real time",
+    ],
+}
+
+QA_RESPONSIBILITIES: List[str] = [
+    "Develop and execute test plans and cases",
+    "Automate regression and smoke tests where practical",
+    "Log, track, and verify defects through resolution",
+    "Collaborate with engineering to reproduce issues",
+    "Report quality metrics and release readiness",
+]
+
+
 def _extract_list(text: str) -> List[str]:
     parts = _BULLET_SPLIT.split(text.strip())
     return [p.strip() for p in parts if p.strip()]
+
 
 def interpret_instructions(instructions: str) -> Dict[str, Any]:
     instr = instructions.strip()
@@ -26,7 +70,9 @@ def interpret_instructions(instructions: str) -> Dict[str, Any]:
         up["bullets_add"] = _extract_list(m.group(1))
 
     # CTA text
-    m = re.search(r"(?:set\s+)?cta\s*text\s*(?:to)?\s*[:=]\s*['\"]?(.+?)['\"]?(?:\s|$)", instr, flags=re.I)
+    m = re.search(
+        r"(?:set\s+)?cta\s*text\s*(?:to)?\s*[:=]\s*['\"]?(.+?)['\"]?(?:\s|$)", instr, flags=re.I
+    )
     if m:
         up["cta_text"] = m.group(1).strip()
 
@@ -37,13 +83,35 @@ def interpret_instructions(instructions: str) -> Dict[str, Any]:
 
     # Remove CTA entirely
     if re.search(r"\b(remove|clear|drop)\s+cta\b", instr, flags=re.I):
-        # Use empty strings so templates treat as falsy
         up["cta_text"] = ""
         up["cta_url"] = ""
 
     # Purpose
-    m = re.search(r"(?:set\s+)?purpose\s*(?:to)?\s*[:=]\s*['\"]?([A-Za-z][A-Za-z -]+)['\"]?", instr, flags=re.I)
+    m = re.search(
+        r"(?:set\s+)?purpose\s*(?:to)?\s*[:=]\s*['\"]?([A-Za-z][A-Za-z -]+)['\"]?",
+        instr,
+        flags=re.I,
+    )
     if m:
-        up["purpose"] = m.group(1).strip()
+        up["purpose"] = m.group(1).strip().lower()
+
+    # ---------- Heuristics for vague asks / length ----------
+    if re.search(
+        r"\b(more (helpful|detailed|useful|informative)|make.*longer|>\s*50\s*words)\b",
+        instr,
+        flags=re.I,
+    ):
+        if "bullets_add" not in up and "bullets_replace" not in up:
+            purpose = up.get("purpose", "welcome")
+            up["bullets_add"] = DEFAULT_BY_PURPOSE.get(purpose, DEFAULT_BY_PURPOSE["welcome"])
+        if "cta_text" not in up:
+            up["cta_text"] = "Get started"
+
+    # ---------- Role responsibilities (e.g., QA/AQ engineer) ----------
+    if re.search(r"\b(QA|AQ|quality\s*assurance)\s+engineer\b", instr, flags=re.I):
+        if "bullets_replace" not in up and "bullets_add" not in up:
+            up["bullets_replace"] = QA_RESPONSIBILITIES
+        elif "bullets_add" not in up:
+            up["bullets_add"] = QA_RESPONSIBILITIES
 
     return up

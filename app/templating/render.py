@@ -1,12 +1,30 @@
 # mypy: disable-error-code=import-untyped
 from __future__ import annotations
-from typing import Any, Dict, Tuple, cast
+from typing import Any
+from typing import Dict, Tuple, cast
 
 from bs4 import BeautifulSoup
 from premailer import transform
 
 from app.tools.brand_loader import load_brand
 from app.templating.env import render_template, jinja_env
+
+
+def _clean_context_for_render(ctx: dict[str, Any] | None) -> dict[str, Any]:
+    d = dict(ctx or {})
+    # Avoid colliding with explicit kwargs passed to .render()
+    d.pop("subject", None)
+    return d
+
+
+# add near the top (once)
+def _merge_ctx(*maps):
+    out = {}
+    for m in maps:
+        if not isinstance(m, dict):
+            continue
+        out.update(m)
+    return out
 
 
 def derive_preheader(plain_text: str, limit: int = 90) -> str:
@@ -39,21 +57,49 @@ def render_generic_email(
     """
     brand = load_brand(brand_id)
     vars = variables or {}
+    if vars.get("subject"):
+        subject = str(vars["subject"])
     preheader = vars.get("preheader") or derive_preheader(body_text)
     cta_text = vars.get("cta_text") or "Learn more"
     cta_url = vars.get("cta_url") or brand.links.get("website") or "#"
+
+    # Optional long-form intro
+    if vars.get("long_form") or vars.get("tone"):
+        tone = str(vars.get("tone") or "friendly").lower()
+        name = vars.get("recipient_name") or vars.get("recipient_email") or "there"
+        bullets = vars.get("bullets") or []
+        cta_text = (vars.get("cta_text") or "").strip()
+        lines = []
+        if tone in {"formal", "professional"}:
+            lines.append(f"Hello {name},")
+            lines.append("Welcome aboard—it's a pleasure to have you with us.")
+        elif tone in {"warm", "enthusiastic", "friendly"}:
+            lines.append(f"Hi {name} — welcome! We're thrilled to have you.")
+        else:
+            lines.append(f"Hi {name}, welcome!")
+        if bullets:
+            lines.append("To make your first days smooth, here are a few quick wins:")
+            for b in bullets[:4]:
+                lines.append(f"• {b}")
+        if cta_text:
+            lines.append(f"When you're ready, {cta_text[0].lower() + cta_text[1:]}")
+        lines.append("If anything feels unclear, just reply—happy to help.")
+        lines.append("Best,\nThe Team")
+        intro = "\n".join(lines).strip()
+        body_text = (intro + ("\n\n" + body_text if body_text else "")).strip()
 
     # Re-render dynamic footer/signature strings as Jinja templates
     env = jinja_env()
     footer_html = brand.footer_html
     signature_html = brand.signature_html
+    cleaned_vars = {k: v for k, v in (vars or {}).items() if k != "subject"}
     if footer_html:
         footer_html = env.from_string(footer_html).render(
-            brand=brand, subject=subject, body_text=body_text, purpose=purpose, **vars
+            brand=brand, subject=subject, body_text=body_text, purpose=purpose, **cleaned_vars
         )
     if signature_html:
         signature_html = env.from_string(signature_html).render(
-            brand=brand, subject=subject, body_text=body_text, purpose=purpose, **vars
+            brand=brand, subject=subject, body_text=body_text, purpose=purpose, **cleaned_vars
         )
 
     context = {

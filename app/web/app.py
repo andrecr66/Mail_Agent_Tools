@@ -1,4 +1,6 @@
 from __future__ import annotations
+from pydantic import BaseModel
+from app.agents.interpret import interpret_instructions
 from fastapi import FastAPI, Query
 
 from app.agents.draft_agent import DraftAgent
@@ -6,7 +8,6 @@ from app.agents.types import DraftRequest, DraftResponse
 from app.mail.types import PreviewResponse, SendResult
 from app.mail.workflow import preview as wf_preview, deliver as wf_deliver
 from app.web.cors import install_cors
-from pydantic import BaseModel
 from typing import Any, Dict
 
 
@@ -63,6 +64,9 @@ def get_settings() -> dict[str, str]:
 
 # ---------- Iteration endpoints for chat-driven review/approval ----------
 class DraftUpdate(BaseModel):
+    subject: str | None = None
+    tone: str | None = None
+    long_form: bool | None = None
     # If set, replaces the whole bullets list; otherwise we can append with bullets_add
     bullets_replace: list[str] | None = None
     bullets_add: list[str] = []
@@ -112,11 +116,9 @@ def mail_iterate_deliver(
     return data
 
 
-from pydantic import BaseModel
-from app.agents.interpret import interpret_instructions
-
 class NLUpdate(BaseModel):
     instructions: str
+
 
 @app.post("/draft/iterate/nl", response_model=PreviewResponse)
 def draft_iterate_nl(base: DraftRequest, updates: NLUpdate) -> PreviewResponse:
@@ -125,8 +127,11 @@ def draft_iterate_nl(base: DraftRequest, updates: NLUpdate) -> PreviewResponse:
     data = wf_preview(req2)
     return PreviewResponse(**data)
 
+
 @app.post("/mail/iterate/nl-deliver")
-def mail_iterate_nl_deliver(base: DraftRequest, updates: NLUpdate, mode: str = "draft") -> Dict[str, Any]:
+def mail_iterate_nl_deliver(
+    base: DraftRequest, updates: NLUpdate, mode: str = "draft"
+) -> Dict[str, Any]:
     parsed = interpret_instructions(updates.instructions)
     req2 = _apply_updates(base, DraftUpdate(**parsed))
     return wf_deliver(req2, force_action=mode)

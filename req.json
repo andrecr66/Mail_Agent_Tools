@@ -1,6 +1,13 @@
 {
-  "recipient": {"email":"pat@example.com","name":"Pat","company":"Acme"},
-  "purpose":"outreach",
+  "recipient": {"email":"ana@example.com","name":"Ana"},
+  "purpose":"welcome",
   "brand_id":"default",
-  "context":{"cta_text":"Visit CodeRoad","cta_url":"https://coderoad.com/","bullets":["Explore docs","Book a demo"]}
+  "context":{
+    "bullets":["Get access to the docs","Join the team Slack","Meet your onboarding buddy","Check the roadmap"],
+    "cta_text":"Book your first week",
+    "cta_url":"https://example.com/start",
+    "long_form": true,
+    "tone": "warm",
+    "subject": "Welcome aboard, Ana! 🎉"
+  }
 }

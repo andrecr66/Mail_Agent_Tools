@@ -7,12 +7,20 @@ BASE_REQ: dict[str, Any] = {
     "recipient": {"email": "pat@example.com", "name": "Pat"},
     "purpose": "welcome",
     "brand_id": "default",
-    "context": {"bullets": ["Explore docs"], "cta_text": "Visit CodeRoad", "cta_url": "https://coderoad.com/"},
+    "context": {
+        "bullets": ["Explore docs"],
+        "cta_text": "Visit CodeRoad",
+        "cta_url": "https://coderoad.com/",
+    },
 }
 
-async def _iter_nl_preview(client: AsyncClient, base: dict[str, Any], instructions: str) -> Response:
+
+async def _iter_nl_preview(
+    client: AsyncClient, base: dict[str, Any], instructions: str
+) -> Response:
     body = {"base": base, "updates": {"instructions": instructions}}
     return await client.post("/draft/iterate/nl", json=body)
+
 
 async def test_iterate_nl_preview_adds_bullets_and_cta(anyio_backend: str) -> None:
     transport = ASGITransport(app=app)
@@ -25,10 +33,15 @@ async def test_iterate_nl_preview_adds_bullets_and_cta(anyio_backend: str) -> No
         assert "Book a demo" in data["text"]
         assert "See pricing" in data["text"]
 
+
 async def test_iterate_nl_deliver_draft(anyio_backend: str) -> None:
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        body = {"base": BASE_REQ, "updates": {"instructions": "replace bullets: One, Two; remove cta"}, "mode": "draft"}
+        body = {
+            "base": BASE_REQ,
+            "updates": {"instructions": "replace bullets: One, Two; remove cta"},
+            "mode": "draft",
+        }
         r = await ac.post("/mail/iterate/nl-deliver", json=body)
         assert r.status_code == 200
         d = r.json()
