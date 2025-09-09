@@ -1,7 +1,9 @@
 from typing import Any
+import pytest
 from httpx import AsyncClient, Response
 from httpx import ASGITransport
 from app.web.app import app
+import app.mail.workflow as wf  # for monkeypatching
 
 BASE_REQ: dict[str, Any] = {
     "recipient": {"email": "pat@example.com", "name": "Pat"},
@@ -34,7 +36,18 @@ async def test_iterate_nl_preview_adds_bullets_and_cta(anyio_backend: str) -> No
         assert "See pricing" in data["text"]
 
 
-async def test_iterate_nl_deliver_draft(anyio_backend: str) -> None:
+async def test_iterate_nl_deliver_draft(anyio_backend: str, monkeypatch: pytest.MonkeyPatch) -> None:
+    # avoid real Gmail by faking the send function the workflow module uses
+    def fake_send(**kwargs: Any) -> dict[str, Any]:
+        return {
+            "status": "draft",
+            "id": "test-message-id",
+            "labels_applied": ["Label_1", "Label_2"],
+            "to": kwargs["to"],
+            "subject": kwargs["subject"],
+        }
+
+    monkeypatch.setattr(wf, "draft_or_send_message", fake_send, raising=False)
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         body = {

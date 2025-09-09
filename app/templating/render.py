@@ -17,15 +17,6 @@ def _clean_context_for_render(ctx: dict[str, Any] | None) -> dict[str, Any]:
     return d
 
 
-# add near the top (once)
-def _merge_ctx(*maps):
-    out = {}
-    for m in maps:
-        if not isinstance(m, dict):
-            continue
-        out.update(m)
-    return out
-
 
 def derive_preheader(plain_text: str, limit: int = 90) -> str:
     s = " ".join(plain_text.split())
