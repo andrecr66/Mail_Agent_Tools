@@ -87,11 +87,30 @@ def _maybe_find_email(d: Dict[str, Any]) -> Optional[str]:
     return None
 
 
+def _normalize_purpose(p: str) -> str:
+    pl = (p or "").strip().lower()
+    if not pl:
+        return "welcome"
+    if "welcome" in pl:
+        return "welcome"
+    if any(k in pl for k in ("newsletter", "updates", "digest")):
+        return "newsletter"
+    if any(k in pl for k in ("promo", "promotion", "offer", "sale", "discount")):
+        return "promo"
+    if any(k in pl for k in ("outreach", "intro", "introduction", "reach out", "cold")):
+        return "outreach"
+    if any(k in pl for k in ("notice", "announcement", "policy", "update")):
+        return "notice"
+    if any(k in pl for k in ("maintenance", "downtime", "outage", "window")):
+        return "maintenance"
+    return pl
+
+
 def _ensure_defaults(base: Dict[str, Any]) -> Dict[str, Any]:
     # Normalize into DraftRequest shape; do not mutate caller’s dict
     out: Dict[str, Any] = {
         "recipient": {},
-        "purpose": str(_first_present(base, ("purpose", "email_purpose", "type", "category")) or "welcome"),
+        "purpose": _normalize_purpose(str(_first_present(base, ("purpose", "email_purpose", "type", "category")) or "welcome")),
         "brand_id": str(_first_present(base, ("brand_id", "brandId", "brand", "sender_brand")) or "default"),
         "context": dict(base.get("context") or {}),
     }
