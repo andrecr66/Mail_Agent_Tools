@@ -1,5 +1,6 @@
 from __future__ import annotations
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Iterable
+import os
 from .mail_tools import preview_mail, preview_mail_nl, deliver_mail
 
 DEFAULT_BY_PURPOSE: dict[str, list[str]] = {
@@ -46,31 +47,69 @@ CTA_BY_PURPOSE: dict[str, str] = {
 }
 
 
-def _ensure_defaults(base: Dict[str, Any]) -> Dict[str, Any]:
-    # Copy-ish update (we don't mutate the caller’s dict)
-    # Normalize common flat shapes into the expected DraftRequest shape
-    rec: Dict[str, Any] = {}
-    if isinstance(base.get("recipient"), dict):
-        rec = dict(base["recipient"])  # copy
-    else:
-        # Accept flat variants like {email, name} or {to}
-        if base.get("recipient") and isinstance(base.get("recipient"), str):
-            rec["email"] = base.get("recipient")
-        if base.get("email"):
-            rec.setdefault("email", base.get("email"))
-        if base.get("to"):
-            rec.setdefault("email", base.get("to"))
-        if base.get("name"):
-            rec["name"] = base.get("name")
+def _first_present(d: Dict[str, Any], keys: Iterable[str]) -> Optional[Any]:
+    for k in keys:
+        v = d.get(k)
+        if v is not None and v != "":
+            return v
+    return None
 
+
+def _maybe_find_email(d: Dict[str, Any]) -> Optional[str]:
+    # Prefer common keys
+    for key in (
+        "email",
+        "to",
+        "recipient_email",
+        "recipientEmail",
+        "recipient",
+        "address",
+        "email_address",
+        "recipient_email_address",
+        "recipientEmailAddress",
+    ):
+        v = d.get(key)
+        if isinstance(v, str) and "@" in v:
+            return v
+        if isinstance(v, dict):
+            v2 = v.get("email")
+            if isinstance(v2, str) and "@" in v2:
+                return v2
+    # Shallow scan
+    for v in d.values():
+        if isinstance(v, str) and "@" in v:
+            return v
+    return None
+
+
+def _ensure_defaults(base: Dict[str, Any]) -> Dict[str, Any]:
+    # Normalize into DraftRequest shape; do not mutate caller’s dict
     out: Dict[str, Any] = {
-        "recipient": rec,
-        "purpose": base.get("purpose") or "welcome",
-        "brand_id": base.get("brand_id") or "default",
+        "recipient": {},
+        "purpose": str(_first_present(base, ("purpose", "email_purpose", "type", "category")) or "welcome"),
+        "brand_id": str(_first_present(base, ("brand_id", "brandId", "brand", "sender_brand")) or "default"),
         "context": dict(base.get("context") or {}),
     }
-    ctx = out["context"]
 
+    # Recipient normalization
+    if isinstance(base.get("recipient"), dict):
+        out["recipient"] = dict(base["recipient"])  # copy
+    elif isinstance(base.get("recipient"), str) and "@" in str(base.get("recipient")):
+        out["recipient"] = {"email": str(base.get("recipient"))}
+    else:
+        email = _maybe_find_email(base)
+        name = _first_present(base, ("name", "recipient_name", "recipientName", "full_name", "first_name"))
+        if email:
+            out["recipient"] = {"email": email}
+            if name:
+                out["recipient"]["name"] = str(name)
+
+    # Fallback name = email if missing
+    rec = out["recipient"]
+    if isinstance(rec, dict) and rec.get("email") and not rec.get("name"):
+        rec["name"] = rec.get("email")
+
+    ctx = out["context"]
     purpose = str(out["purpose"]).lower()
     bullets = ctx.get("bullets") or []
     if not bullets:
@@ -79,8 +118,10 @@ def _ensure_defaults(base: Dict[str, Any]) -> Dict[str, Any]:
     if not ctx.get("cta_text"):
         ctx["cta_text"] = CTA_BY_PURPOSE.get(purpose, "Get started")
     if not ctx.get("cta_url"):
-        # Gentle default; your template already tolerates empty CTA
         ctx["cta_url"] = "https://coderoad.com/"
+
+    if os.getenv("DEBUG_MAIL_TOOLS"):
+        print("[smart_preview] normalized base:", out)
 
     return out
 
