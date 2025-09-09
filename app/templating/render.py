@@ -64,7 +64,12 @@ def render_generic_email(
         if tone in {"formal", "professional"}:
             lines.append(f"Hello {name},")
             lines.append("Welcome aboard—it's a pleasure to have you with us.")
-        elif tone in {"warm", "enthusiastic", "friendly"}:
+        elif tone in {"enthusiastic"}:
+            lines.append(f"Hi {name} — we’re incredibly excited to have you on board!")
+            lines.append("Here are a few quick ways to hit the ground running:")
+        elif tone in {"warm"}:
+            lines.append(f"Hi {name} — welcome! We’re happy you’re here.")
+        else:  # friendly or default
             lines.append(f"Hi {name} — welcome! We're thrilled to have you.")
         else:
             lines.append(f"Hi {name}, welcome!")

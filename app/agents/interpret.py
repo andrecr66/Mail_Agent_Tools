@@ -107,11 +107,15 @@ def interpret_instructions(instructions: str) -> Dict[str, Any]:
         up["tone"] = m.group(1).strip().lower()
 
     # Tone heuristics via keywords
-    if re.search(r"\b(friend(ly|lier)|warm(er)?|welcom(ing|e))\b", instr, flags=re.I):
+    if re.search(r"\b(friend(ly|lier)|more\s+friendly|welcom(ing|e))\b", instr, flags=re.I):
         up.setdefault("tone", "friendly")
-    if re.search(r"\b(formal|professional)\b", instr, flags=re.I):
+    if re.search(r"\b(warm|warmer|more\s+warm)\b", instr, flags=re.I):
+        up.setdefault("tone", "warm")
+    if re.search(r"\b(excit(ed|ing)|more\s+excited|enthusiastic|more\s+enthusiastic)\b", instr, flags=re.I):
+        up.setdefault("tone", "enthusiastic")
+    if re.search(r"\b(formal|more\s+formal|professional|more\s+professional)\b", instr, flags=re.I):
         up.setdefault("tone", "professional")
-    if re.search(r"\b(casual)\b", instr, flags=re.I):
+    if re.search(r"\b(casual|more\s+casual)\b", instr, flags=re.I):
         up.setdefault("tone", "casual")
 
     # Length / detail hints
