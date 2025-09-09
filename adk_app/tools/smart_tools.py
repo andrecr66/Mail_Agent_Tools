@@ -1,6 +1,6 @@
 from __future__ import annotations
-from typing import Any, Dict
-from .mail_tools import preview_mail, preview_mail_nl
+from typing import Any, Dict, Optional
+from .mail_tools import preview_mail, preview_mail_nl, deliver_mail
 
 DEFAULT_BY_PURPOSE: dict[str, list[str]] = {
     "welcome": [
@@ -48,8 +48,23 @@ CTA_BY_PURPOSE: dict[str, str] = {
 
 def _ensure_defaults(base: Dict[str, Any]) -> Dict[str, Any]:
     # Copy-ish update (we don't mutate the caller’s dict)
+    # Normalize common flat shapes into the expected DraftRequest shape
+    rec: Dict[str, Any] = {}
+    if isinstance(base.get("recipient"), dict):
+        rec = dict(base["recipient"])  # copy
+    else:
+        # Accept flat variants like {email, name} or {to}
+        if base.get("recipient") and isinstance(base.get("recipient"), str):
+            rec["email"] = base.get("recipient")
+        if base.get("email"):
+            rec.setdefault("email", base.get("email"))
+        if base.get("to"):
+            rec.setdefault("email", base.get("to"))
+        if base.get("name"):
+            rec["name"] = base.get("name")
+
     out: Dict[str, Any] = {
-        "recipient": base.get("recipient") or {},
+        "recipient": rec,
         "purpose": base.get("purpose") or "welcome",
         "brand_id": base.get("brand_id") or "default",
         "context": dict(base.get("context") or {}),
@@ -78,3 +93,25 @@ async def smart_preview_nl(base: Dict[str, Any], instructions: str) -> Dict[str,
     # still ensure sensible defaults before NL iteration
     seeded = _ensure_defaults(base)
     return await preview_mail_nl(seeded, instructions)
+
+
+async def smart_deliver(
+    base: Dict[str, Any],
+    updates: Optional[Dict[str, Any]] = None,
+    mode: str = "draft",
+) -> Dict[str, Any]:
+    seeded = _ensure_defaults(base)
+    return await deliver_mail(seeded, updates, mode=mode)
+
+
+async def smart_deliver_nl(
+    base: Dict[str, Any],
+    instructions: str,
+    mode: str = "draft",
+) -> Dict[str, Any]:
+    seeded = _ensure_defaults(base)
+    # Reuse deliver_mail_nl via mail_tools (through agent wiring), or call API directly
+    # Here we call preview first is optional; we directly deliver with NL updates
+    from .mail_tools import deliver_mail_nl
+
+    return await deliver_mail_nl(seeded, instructions, mode=mode)

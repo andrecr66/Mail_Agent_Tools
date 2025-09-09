@@ -9,15 +9,16 @@ except Exception:  # pragma: no cover
     from google.adk.agents import LlmAgent
     from google.adk.tools import FunctionTool
 
-from adk_app.tools.mail_tools import preview_mail, deliver_mail, preview_mail_nl, deliver_mail_nl
+from adk_app.tools.mail_tools import preview_mail_nl
+from adk_app.tools.smart_tools import smart_preview, smart_preview_nl, smart_deliver, smart_deliver_nl
 
 MODEL = os.getenv("ADK_MODEL", "gemini-2.0-flash")
 
 # Minimal signature: just pass the function
-preview_tool = FunctionTool(preview_mail)
-deliver_tool = FunctionTool(deliver_mail)
-preview_nl_tool = FunctionTool(preview_mail_nl)
-deliver_nl_tool = FunctionTool(deliver_mail_nl)
+preview_tool = FunctionTool(smart_preview)
+deliver_tool = FunctionTool(smart_deliver)
+preview_nl_tool = FunctionTool(smart_preview_nl)
+deliver_nl_tool = FunctionTool(smart_deliver_nl)
 
 INSTRUCTIONS = """
 You help users compose emails safely with an approval loop.
