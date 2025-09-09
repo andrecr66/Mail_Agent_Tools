@@ -18,11 +18,16 @@ def _json_or_error(r: httpx.Response) -> Dict[str, Any]:
         r.raise_for_status()
         return cast(Dict[str, Any], r.json())
     except httpx.HTTPStatusError:
-        return {
-            "error": r.text,
+        payload: Dict[str, Any] = {
+            "ok": False,
             "status_code": r.status_code,
             "endpoint": str(r.request.url),
         }
+        try:
+            payload["error_json"] = r.json()
+        except Exception:
+            payload["error"] = r.text
+        return payload
 
 
 async def preview_mail(
