@@ -69,6 +69,10 @@ def interpret_instructions(instructions: str) -> Dict[str, Any]:
     if m:
         up["bullets_add"] = _extract_list(m.group(1))
 
+    # Clear/remove bullets entirely
+    if re.search(r"\b(clear|remove|drop)\s+bullets?\b", instr, flags=re.I):
+        up["bullets_replace"] = []
+
     # CTA text
     m = re.search(
         r"(?:set\s+)?cta\s*text\s*(?:to)?\s*[:=]\s*['\"]?(.+?)['\"]?(?:\s|$)", instr, flags=re.I
@@ -82,9 +86,37 @@ def interpret_instructions(instructions: str) -> Dict[str, Any]:
         up["cta_url"] = m.group(1).strip()
 
     # Remove CTA entirely
-    if re.search(r"\b(remove|clear|drop)\s+cta\b", instr, flags=re.I):
+    if re.search(r"\b(remove|clear|drop|no)\s+(cta|button)\b", instr, flags=re.I):
         up["cta_text"] = ""
         up["cta_url"] = ""
+
+    # Subject override
+    m = re.search(
+        r"(?:set\s+)?subject\s*(?:to)?\s*[:=]\s*['\"]?(.+?)['\"]?(?:\s|$)", instr, flags=re.I
+    )
+    if m:
+        up["subject"] = m.group(1).strip()
+
+    # Tone setting (explicit)
+    m = re.search(
+        r"(?:set\s+)?tone\s*(?:to)?\s*[:=]\s*['\"]?([A-Za-z ]+)['\"]?",
+        instr,
+        flags=re.I,
+    )
+    if m:
+        up["tone"] = m.group(1).strip().lower()
+
+    # Tone heuristics via keywords
+    if re.search(r"\b(friend(ly|lier)|warm(er)?|welcom(ing|e))\b", instr, flags=re.I):
+        up.setdefault("tone", "friendly")
+    if re.search(r"\b(formal|professional)\b", instr, flags=re.I):
+        up.setdefault("tone", "professional")
+    if re.search(r"\b(casual)\b", instr, flags=re.I):
+        up.setdefault("tone", "casual")
+
+    # Length / detail hints
+    if re.search(r"\b(short(en)?|more\s+concise|tighter)\b", instr, flags=re.I):
+        up["long_form"] = False
 
     # Purpose
     m = re.search(
@@ -97,7 +129,7 @@ def interpret_instructions(instructions: str) -> Dict[str, Any]:
 
     # ---------- Heuristics for vague asks / length ----------
     if re.search(
-        r"\b(more (helpful|detailed|useful|informative)|make.*longer|>\s*50\s*words)\b",
+        r"\b(more (helpful|detailed|useful|informative)|make.*longer|expand|add\s+detail|>\s*50\s*words)\b",
         instr,
         flags=re.I,
     ):
@@ -106,6 +138,7 @@ def interpret_instructions(instructions: str) -> Dict[str, Any]:
             up["bullets_add"] = DEFAULT_BY_PURPOSE.get(purpose, DEFAULT_BY_PURPOSE["welcome"])
         if "cta_text" not in up:
             up["cta_text"] = "Get started"
+        up.setdefault("long_form", True)
 
     # ---------- Role responsibilities (e.g., QA/AQ engineer) ----------
     if re.search(r"\b(QA|AQ|quality\s*assurance)\s+engineer\b", instr, flags=re.I):

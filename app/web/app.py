@@ -77,6 +77,13 @@ class DraftUpdate(BaseModel):
 
 def _apply_updates(base: DraftRequest, updates: DraftUpdate) -> DraftRequest:
     ctx = dict(base.context or {})
+    # Subject/tone/long_form feed into renderer via context
+    if updates.subject is not None:
+        ctx["subject"] = updates.subject
+    if updates.tone is not None:
+        ctx["tone"] = updates.tone
+    if updates.long_form is not None:
+        ctx["long_form"] = updates.long_form
     if updates.bullets_replace is not None:
         ctx["bullets"] = [b for b in updates.bullets_replace if str(b).strip()]
     elif updates.bullets_add:
@@ -105,15 +112,15 @@ def draft_iterate_preview(base: DraftRequest, updates: DraftUpdate) -> PreviewRe
     return PreviewResponse(**data)
 
 
-@app.post("/mail/iterate/deliver")
+@app.post("/mail/iterate/deliver", response_model=SendResult)
 def mail_iterate_deliver(
     base: DraftRequest,
     updates: DraftUpdate,
     mode: str = "draft",
-) -> Dict[str, Any]:
+) -> SendResult:
     req2 = _apply_updates(base, updates)
     data = wf_deliver(req2, force_action=mode)
-    return data
+    return SendResult(**data)
 
 
 class NLUpdate(BaseModel):
@@ -128,10 +135,11 @@ def draft_iterate_nl(base: DraftRequest, updates: NLUpdate) -> PreviewResponse:
     return PreviewResponse(**data)
 
 
-@app.post("/mail/iterate/nl-deliver")
+@app.post("/mail/iterate/nl-deliver", response_model=SendResult)
 def mail_iterate_nl_deliver(
     base: DraftRequest, updates: NLUpdate, mode: str = "draft"
-) -> Dict[str, Any]:
+) -> SendResult:
     parsed = interpret_instructions(updates.instructions)
     req2 = _apply_updates(base, DraftUpdate(**parsed))
-    return wf_deliver(req2, force_action=mode)
+    data = wf_deliver(req2, force_action=mode)
+    return SendResult(**data)

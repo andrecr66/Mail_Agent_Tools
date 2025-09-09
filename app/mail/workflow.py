@@ -13,12 +13,25 @@ def generate(req: DraftRequest) -> DraftResponse:
 
 
 def render(req: DraftRequest, draft: DraftResponse) -> Tuple[str, str]:
+    """Render HTML+text using brand and context.
+
+    Enrich template variables with recipient metadata for personalization.
+    Default long_form for welcome emails unless the caller explicitly sets it.
+    """
+    vars: dict[str, Any] = dict(req.context or {})
+    # Personalization hints for the template
+    vars.setdefault("recipient_name", getattr(req.recipient, "name", None))
+    vars.setdefault("recipient_email", req.recipient.email)
+    # Make welcome emails long-form by default to improve first impression
+    if "long_form" not in vars and str(req.purpose).lower() == "welcome":
+        vars["long_form"] = True
+
     html, text = render_generic_email(
         subject=draft.subject,
         body_text=draft.body_text,
         brand_id=req.brand_id,
         purpose=req.purpose,
-        variables=req.context or {},
+        variables=vars,
     )
     return html, text
 

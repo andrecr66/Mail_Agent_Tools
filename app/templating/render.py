@@ -81,6 +81,16 @@ def render_generic_email(
             lines.append("To make your first days smooth, here are a few quick wins:")
             for b in bullets[:4]:
                 lines.append(f"• {b}")
+        else:
+            # Provide a more substantial intro (~80–120 words when combined with signature/body)
+            lines.append(
+                "To help you get value fast, we suggest exploring a couple of real examples, "
+                "reviewing a short quickstart, and trying one small task end‑to‑end."
+            )
+            lines.append(
+                "Most new users create their first draft in minutes and then iterate—" 
+                "if anything feels unclear, we’re here to help."
+            )
         if cta_text:
             lines.append(f"When you're ready, {cta_text[0].lower() + cta_text[1:]}")
         lines.append("If anything feels unclear, just reply—happy to help.")
