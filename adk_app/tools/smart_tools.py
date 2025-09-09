@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Any, Dict, Optional, Iterable
 import os
-from .mail_tools import preview_mail, preview_mail_nl, deliver_mail
+from .mail_tools import preview_mail, preview_mail_nl, deliver_mail, deliver_mail_nl
 
 DEFAULT_BY_PURPOSE: dict[str, list[str]] = {
     "welcome": [
@@ -45,6 +45,11 @@ CTA_BY_PURPOSE: dict[str, str] = {
     "notice": "Read the notice",
     "maintenance": "See status page",
 }
+
+
+# In-process memory of the last request/updates to improve tool UX when the
+# LLM calls deliver without passing the most recent changes explicitly.
+_STATE: Dict[str, Any] = {"base": None, "updates": None, "nl": None}
 
 
 def _first_present(d: Dict[str, Any], keys: Iterable[str]) -> Optional[Any]:
@@ -127,7 +132,9 @@ def _ensure_defaults(base: Dict[str, Any]) -> Dict[str, Any]:
 
 
 async def smart_preview(base: Dict[str, Any]) -> Dict[str, Any]:
-    data = await preview_mail(_ensure_defaults(base))
+    seeded = _ensure_defaults(base)
+    _STATE.update({"base": seeded, "updates": None, "nl": None})
+    data = await preview_mail(seeded)
     # If the backend surfaced an HTTP error payload, return it directly
     if isinstance(data, dict) and data.get("ok") is False:
         return data
@@ -153,6 +160,7 @@ async def smart_preview(base: Dict[str, Any]) -> Dict[str, Any]:
 async def smart_preview_nl(base: Dict[str, Any], instructions: str) -> Dict[str, Any]:
     # still ensure sensible defaults before NL iteration
     seeded = _ensure_defaults(base)
+    _STATE.update({"base": seeded, "updates": None, "nl": instructions})
     data = await preview_mail_nl(seeded, instructions)
     if isinstance(data, dict) and data.get("ok") is False:
         return data
@@ -180,7 +188,18 @@ async def smart_deliver(
     mode: str = "draft",
 ) -> Dict[str, Any]:
     seeded = _ensure_defaults(base)
-    return await deliver_mail(seeded, updates, mode=mode)
+    # If updates provided, remember and deliver with them
+    if updates is not None:
+        _STATE.update({"base": seeded, "updates": updates})
+        return await deliver_mail(seeded, updates, mode=mode)
+    # Otherwise, use the most recent NL instructions if available
+    if _STATE.get("nl"):
+        return await deliver_mail_nl(seeded, _STATE["nl"], mode=mode)
+    # Or fall back to stored structured updates if any
+    if _STATE.get("updates"):
+        return await deliver_mail(seeded, _STATE["updates"], mode=mode)
+    # Last resort: deliver with current seeded base
+    return await deliver_mail(seeded, None, mode=mode)
 
 
 async def smart_deliver_nl(
@@ -189,8 +208,5 @@ async def smart_deliver_nl(
     mode: str = "draft",
 ) -> Dict[str, Any]:
     seeded = _ensure_defaults(base)
-    # Reuse deliver_mail_nl via mail_tools (through agent wiring), or call API directly
-    # Here we call preview first is optional; we directly deliver with NL updates
-    from .mail_tools import deliver_mail_nl
-
+    _STATE.update({"base": seeded, "nl": instructions, "updates": None})
     return await deliver_mail_nl(seeded, instructions, mode=mode)

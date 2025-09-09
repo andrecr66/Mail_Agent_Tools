@@ -24,9 +24,16 @@ def derive_preheader(plain_text: str, limit: int = 90) -> str:
 
 
 def to_plain_text(html: str) -> str:
+    """Extract a readable plaintext version preserving paragraphs.
+
+    Uses a newline separator so lists and paragraphs are easier to read
+    in chat UIs and plain-text previews.
+    """
     soup = BeautifulSoup(html, "lxml")
-    txt: str = soup.get_text(separator=" ", strip=True)
-    return " ".join(txt.split())
+    txt: str = soup.get_text(separator="\n", strip=True)
+    # Collapse multiple blank lines and trim whitespace
+    lines = [line.strip() for line in txt.splitlines() if line.strip()]
+    return "\n".join(lines)
 
 
 def inline_css(html: str) -> str:
