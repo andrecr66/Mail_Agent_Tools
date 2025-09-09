@@ -1,0 +1,10 @@
+{
+  "status": "draft",
+  "id": "1992a43f05ef8cc4",
+  "labels_applied": [
+    "Label_1",
+    "Label_2"
+  ],
+  "to": "pat@example.com",
+  "subject": "Welcome: For Pat"
+}

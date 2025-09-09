@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -euo pipefail
+PY=${PYTHON:-python}
+exec "$PY" -m app.cli "$@"

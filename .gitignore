@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.env
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# App logs / temp
+.uv.log
+.uv.pid
+
+# Local secrets
+.secrets/
+.secrets/google/

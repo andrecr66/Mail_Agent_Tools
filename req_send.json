@@ -1,0 +1,13 @@
+{
+  "recipient": {
+    "email": "andrecr6600@gmail.com",
+    "name": "Pat"
+  },
+  "purpose": "welcome",
+  "brand_id": "default",
+  "context": {
+    "instructions": "Warm tone. Mention our beta and 14-day free trial.",
+    "cta_text": "Visit CodeRoad",
+    "cta_url": "https://coderoad.com/"
+  }
+}

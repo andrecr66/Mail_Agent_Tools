@@ -1,0 +1,6 @@
+{
+  "recipient": {"email":"pat@example.com","name":"Pat","company":"Acme"},
+  "purpose":"outreach",
+  "brand_id":"default",
+  "context":{"cta_text":"Visit CodeRoad","cta_url":"https://coderoad.com/","bullets":["Explore docs","Book a demo"]}
+}

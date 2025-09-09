@@ -1,0 +1,14 @@
+{
+  "stage": 2,
+  "artifacts": [
+    "app/templating/env.py",
+    "app/templating/render.py",
+    "templates/jinja/families/generic/generic_v1.html.j2",
+    "templates/jinja/partials/header.html.j2",
+    "templates/jinja/partials/footer.html.j2",
+    "templates/jinja/partials/button.html.j2",
+    "tests/unit/test_render_generic.py"
+  ],
+  "tests": {"snapshots": "passed"},
+  "notes": "Generic templating with Jinja2, Premailer inlining, plaintext derivation."
+}

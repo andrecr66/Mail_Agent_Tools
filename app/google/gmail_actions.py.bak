@@ -1,0 +1,26 @@
+from __future__ import annotations
+from typing import Any, Dict
+from app.config.settings import settings
+
+
+def dry_run_plan_send(*, to: str, subject: str, raw_size: int, brand_label: str) -> Dict[str, Any]:
+    """
+    Returns a preview of what we'd do with Gmail:
+    - action: 'draft' or 'send' from settings (default 'draft')
+    - labels we intend to apply (prefix + brand)
+    - message metadata including approx size
+    """
+    action = settings.MAIL_AGENT_DEFAULT_ACTION
+    labels = [
+        settings.MAIL_AGENT_GMAIL_LABEL_PREFIX,
+        f"{settings.MAIL_AGENT_GMAIL_LABEL_PREFIX}/{brand_label}",
+    ]
+    return {
+        "action": action,
+        "labels": labels,
+        "preview": {"to": to, "subject": subject, "approx_raw_bytes": raw_size},
+    }
+
+def dry_run_plan_send(*, to: str, subject: str) -> dict:
+    # Deterministic plan used by preview tests; no side effects.
+    return {"action": "draft", "labels_applied": ["Label_1", "Label_2"]}

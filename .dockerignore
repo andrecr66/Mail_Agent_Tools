@@ -1,0 +1,10 @@
+.venv
+__pycache__/
+*.pyc
+.git
+.mypy_cache
+.ruff_cache
+.pytest_cache
+secrets/
+.secrets/    # we'll mount this at runtime
+.env         # we'll mount this at runtime

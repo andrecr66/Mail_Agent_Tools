@@ -1,0 +1,13 @@
+{
+  "stage": 3,
+  "artifacts": [
+    "app/agents/types.py",
+    "app/agents/providers/provider_base.py",
+    "app/agents/providers/seed_provider.py",
+    "app/agents/draft_agent.py",
+    "app/web/app.py",
+    "tests/unit/test_draft_agent.py",
+    "tests/integration/test_api_draft.py"
+  ],
+  "notes": "Deterministic DraftAgent + FastAPI /draft. Provider-agnostic; ready to swap in ADK."
+}

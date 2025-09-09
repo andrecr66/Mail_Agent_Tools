@@ -1,0 +1,31 @@
+{
+  "name": "CodeRoad",
+  "from_name": "CodeRoad Team",
+  "from_email": null,
+  "reply_to": "example@mail.com",
+
+  "logo_url": null,
+  "primary": "#6B21A8",
+  "secondary": "#000000",
+  "background": "#FFFFFF",
+  "text_color": "#111827",
+  "content_width_px": 600,
+  "font_family": "Arial, Helvetica, sans-serif",
+  "button_radius_px": 6,
+
+  "links": {
+    "website": "https://coderoad.com/",
+    "support": "https://coderoad.com/contact",
+    "privacy": "https://coderoad.com/privacy-policy"
+  },
+
+  "signature_html": "<p>— Team {{ brand.name }}</p>",
+  "footer_html": "<p>© {{ brand.name }}</p>",
+  "legal_address": "980 N. Federal Hwy, Suite 306, Boca Raton, FL 33432, United States",
+
+  "label_prefix": "Agent-Sent",
+  "utm_defaults": { "source": "agent", "medium": "email", "campaign": "generic" },
+  "unsubscribe": { "required_for": ["newsletter", "outreach"], "url": null },
+  "attachments_policy": { "allowed": ["pdf", "png", "jpg", "jpeg"], "max_size_mb": 10 },
+  "inline_images": false
+}

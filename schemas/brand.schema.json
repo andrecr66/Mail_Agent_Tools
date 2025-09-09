@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SenderBrand",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "name": { "type": "string", "minLength": 1 },
+    "from_name": { "type": "string" },
+    "from_email": { "type": ["string","null"], "format": "email" },
+    "reply_to": { "type": ["string","null"], "format": "email" },
+
+    "logo_url": { "type": ["string","null"] },
+    "primary": { "type": "string", "pattern": "^#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})$" },
+    "secondary": { "type": "string", "pattern": "^#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})$" },
+    "background": { "type": "string", "pattern": "^#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})$" },
+    "text_color": { "type": "string", "pattern": "^#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})$" },
+    "content_width_px": { "type": "integer", "minimum": 320, "maximum": 900 },
+    "font_family": { "type": "string" },
+    "button_radius_px": { "type": "integer", "minimum": 0, "maximum": 32 },
+
+    "links": {
+      "type": "object",
+      "additionalProperties": { "type": ["string","null"] },
+      "properties": {
+        "website": { "type": ["string","null"] },
+        "support": { "type": ["string","null"] },
+        "privacy": { "type": ["string","null"] }
+      }
+    },
+
+    "signature_html": { "type": "string" },
+    "footer_html": { "type": "string" },
+    "legal_address": { "type": "string" },
+
+    "label_prefix": { "type": "string" },
+    "utm_defaults": {
+      "type": "object",
+      "properties": {
+        "source": { "type": "string" },
+        "medium": { "type": "string" },
+        "campaign": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "unsubscribe": {
+      "type": "object",
+      "properties": {
+        "required_for": { "type": "array", "items": { "type": "string" } },
+        "url": { "type": ["string","null"] }
+      },
+      "additionalProperties": false
+    },
+    "attachments_policy": {
+      "type": "object",
+      "properties": {
+        "allowed": { "type": "array", "items": { "type": "string" } },
+        "max_size_mb": { "type": "number", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "inline_images": { "type": "boolean" }
+  },
+  "required": ["name"]
+}
