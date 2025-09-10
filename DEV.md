@@ -24,3 +24,12 @@ Using the UI
 Notes
 - Delivery integration is live only if Gmail OAuth token exists at `.secrets/google/token.json`. Tests mock delivery.
 - Brands are under `brands/<id>/brand.json`; default id is `default`.
+
+Troubleshooting Gmail send
+- If preview/draft works but send doesn’t show up in Sent or Inbox:
+  1) Confirm which Gmail account the token belongs to:
+     - `.venv/bin/python -c "from app.google.oauth import ensure_user_credentials; from app.google.gmail_service import build_gmail_service; c=ensure_user_credentials(interactive=False); s=build_gmail_service(c); print(s.users().getProfile(userId='me').execute())"`
+  2) Check API response after deliver: it returns `{status: 'send'|'draft', id, labels_applied, to, subject}`.
+  3) Ensure the token has required scopes. If not, re-run interactive auth once:
+     - `.venv/bin/python -c "from app.google.oauth import ensure_user_credentials as e; e(interactive=True)"`
+  4) In Gmail, search for the applied label (default prefix `Agent-Sent`) or check All Mail.

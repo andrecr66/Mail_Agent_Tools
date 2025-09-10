@@ -51,8 +51,9 @@ async def deliver_mail(
 ) -> Dict[str, Any]:
     async with httpx.AsyncClient(base_url=BASE_URL, timeout=30) as ac:
         if updates:
+            # mode must be passed as a query parameter for this endpoint
             r = await ac.post(
-                "/mail/iterate/deliver", json={"base": base, "updates": updates, "mode": mode}
+                f"/mail/iterate/deliver?mode={mode}", json={"base": base, "updates": updates}
             )
         else:
             r = await ac.post(f"/mail/deliver?mode={mode}", json=base)
@@ -78,8 +79,9 @@ async def deliver_mail_nl(
     tool_context: Optional["ToolContext"] = None,
 ) -> Dict[str, Any]:
     async with httpx.AsyncClient(base_url=BASE_URL, timeout=30) as ac:
+        # mode must be passed as a query parameter for this endpoint
         r = await ac.post(
-            "/mail/iterate/nl-deliver",
-            json={"base": base, "updates": {"instructions": instructions}, "mode": mode},
+            f"/mail/iterate/nl-deliver?mode={mode}",
+            json={"base": base, "updates": {"instructions": instructions}},
         )
         return _json_or_error(r)

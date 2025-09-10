@@ -97,7 +97,8 @@ def render_generic_email(
         lines.append("If anything feels unclear, just reply—happy to help.")
         lines.append("Best,\nThe Team")
         intro = "\n".join(lines).strip()
-        body_text = (intro + ("\n\n" + body_text if body_text else "")).strip()
+        # Use the long-form intro as the body to avoid duplicating the baseline content.
+        body_text = intro
 
     # Re-render dynamic footer/signature strings as Jinja templates
     env = jinja_env()
