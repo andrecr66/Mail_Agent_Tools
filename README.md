@@ -91,20 +91,4 @@ Configuration
   - `MAIL_AGENT_GMAIL_LABEL_PREFIX` (default: Agent‑Sent)
   - `MAIL_AGENT_BRAND_ID` (default: default)
 
-Testing
-```bash
-make test
-# or
-pytest -q --cov=app --cov-report=term-missing
-```
-Integration tests mock Gmail send; run manual sends after you’ve created a token.
-
-Troubleshooting
-- Send didn’t show up:
-  - Confirm token account: run the profile snippet in DEV.md.
-  - Re‑run interactive OAuth to refresh scopes.
-  - Check `.uv.log` for `gmail.send id=...` lines.
-
-License
-- © Your project. Add a license if you plan to distribute.
 
