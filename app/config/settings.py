@@ -16,3 +16,8 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+"""Runtime configuration via Pydantic Settings.
+
+All settings can be overridden with environment variables; `.env` is loaded
+in development. Sensitive defaults are kept empty on purpose.
+"""

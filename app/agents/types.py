@@ -22,3 +22,8 @@ class DraftRequest(BaseModel):
 class DraftResponse(BaseModel):
     subject: str
     body_text: str
+"""Pydantic models for agent requests and responses.
+
+These types are shared by the agent, web API and tests to ensure consistent
+contracts across layers.
+"""

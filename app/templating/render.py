@@ -1,6 +1,14 @@
+"""Email rendering utilities (HTML + plaintext).
+
+Renders a purpose-aware, brand-themed email using Jinja templates, then:
+- Inlines CSS for better client compatibility.
+- Derives a readable plaintext version for previews.
+The renderer also supports a long-form intro that adapts to the requested tone.
+"""
 # mypy: disable-error-code=import-untyped
 from __future__ import annotations
-from typing import Any, Dict, Tuple, cast
+from typing import Any
+from typing import Dict, Tuple, cast
 
 from bs4 import BeautifulSoup
 from premailer import transform
@@ -9,15 +17,30 @@ from app.tools.brand_loader import load_brand
 from app.templating.env import render_template, jinja_env
 
 
+def _clean_context_for_render(ctx: dict[str, Any] | None) -> dict[str, Any]:
+    d = dict(ctx or {})
+    # Avoid colliding with explicit kwargs passed to .render()
+    d.pop("subject", None)
+    return d
+
+
+
 def derive_preheader(plain_text: str, limit: int = 90) -> str:
     s = " ".join(plain_text.split())
     return s[:limit]
 
 
 def to_plain_text(html: str) -> str:
+    """Extract a readable plaintext version preserving paragraphs.
+
+    Uses a newline separator so lists and paragraphs are easier to read
+    in chat UIs and plain-text previews.
+    """
     soup = BeautifulSoup(html, "lxml")
-    txt: str = soup.get_text(separator=" ", strip=True)
-    return " ".join(txt.split())
+    txt: str = soup.get_text(separator="\n", strip=True)
+    # Collapse multiple blank lines and trim whitespace
+    lines = [line.strip() for line in txt.splitlines() if line.strip()]
+    return "\n".join(lines)
 
 
 def inline_css(html: str) -> str:
@@ -39,21 +62,63 @@ def render_generic_email(
     """
     brand = load_brand(brand_id)
     vars = variables or {}
+    if vars.get("subject"):
+        subject = str(vars["subject"])
     preheader = vars.get("preheader") or derive_preheader(body_text)
     cta_text = vars.get("cta_text") or "Learn more"
     cta_url = vars.get("cta_url") or brand.links.get("website") or "#"
+
+    # Optional long-form intro
+    if vars.get("long_form") or vars.get("tone"):
+        tone = str(vars.get("tone") or "friendly").lower()
+        name = vars.get("recipient_name") or vars.get("recipient_email") or "there"
+        bullets = vars.get("bullets") or []
+        cta_text = (vars.get("cta_text") or "").strip()
+        lines = []
+        if tone in {"formal", "professional"}:
+            lines.append(f"Hello {name},")
+            lines.append("Welcome aboard—it's a pleasure to have you with us.")
+        elif tone in {"enthusiastic"}:
+            lines.append(f"Hi {name} — we’re incredibly excited to have you on board!")
+            lines.append("Here are a few quick ways to hit the ground running:")
+        elif tone in {"warm"}:
+            lines.append(f"Hi {name} — welcome! We’re happy you’re here.")
+        else:  # friendly or default
+            lines.append(f"Hi {name} — welcome! We're thrilled to have you.")
+        if bullets:
+            lines.append("To make your first days smooth, here are a few quick wins:")
+            for b in bullets[:4]:
+                lines.append(f"• {b}")
+        else:
+            # Provide a more substantial intro (~80–120 words when combined with signature/body)
+            lines.append(
+                "To help you get value fast, we suggest exploring a couple of real examples, "
+                "reviewing a short quickstart, and trying one small task end‑to‑end."
+            )
+            lines.append(
+                "Most new users create their first draft in minutes and then iterate—" 
+                "if anything feels unclear, we’re here to help."
+            )
+        if cta_text:
+            lines.append(f"When you're ready, {cta_text[0].lower() + cta_text[1:]}")
+        lines.append("If anything feels unclear, just reply—happy to help.")
+        lines.append("Best,\nThe Team")
+        intro = "\n".join(lines).strip()
+        # Use the long-form intro as the body to avoid duplicating the baseline content.
+        body_text = intro
 
     # Re-render dynamic footer/signature strings as Jinja templates
     env = jinja_env()
     footer_html = brand.footer_html
     signature_html = brand.signature_html
+    cleaned_vars = {k: v for k, v in (vars or {}).items() if k != "subject"}
     if footer_html:
         footer_html = env.from_string(footer_html).render(
-            brand=brand, subject=subject, body_text=body_text, purpose=purpose, **vars
+            brand=brand, subject=subject, body_text=body_text, purpose=purpose, **cleaned_vars
         )
     if signature_html:
         signature_html = env.from_string(signature_html).render(
-            brand=brand, subject=subject, body_text=body_text, purpose=purpose, **vars
+            brand=brand, subject=subject, body_text=body_text, purpose=purpose, **cleaned_vars
         )
 
     context = {

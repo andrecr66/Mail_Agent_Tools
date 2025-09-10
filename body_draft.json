@@ -1,0 +1,26 @@
+{
+  "base": {
+    "recipient": {
+      "email": "pat@example.com",
+      "name": "Pat"
+    },
+    "purpose": "welcome",
+    "brand_id": "default",
+    "context": {
+      "bullets": [
+        "Explore docs"
+      ],
+      "cta_text": "Visit CodeRoad",
+      "cta_url": "https://coderoad.com/"
+    }
+  },
+  "updates": {
+    "bullets_replace": [
+      "Book a demo",
+      "See pricing"
+    ],
+    "cta_text": "Start trial",
+    "cta_url": "https://coderoad.com/start"
+  },
+  "mode": "draft"
+}

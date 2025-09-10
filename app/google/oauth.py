@@ -1,6 +1,6 @@
 from __future__ import annotations
 from pathlib import Path
-from typing import Sequence, cast
+from typing import Any, Sequence, cast
 
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow  # type: ignore[import-untyped]
@@ -15,6 +15,12 @@ SCOPES: Sequence[str] = (
     "https://www.googleapis.com/auth/gmail.labels",
     "https://www.googleapis.com/auth/gmail.modify",
 )
+
+
+def _has_required_scopes(creds: Any) -> bool:
+    """Local scope check to avoid circular imports."""
+    scopes = set(getattr(creds, "scopes", []) or [])
+    return set(SCOPES).issubset(scopes)
 
 
 def ensure_user_credentials(*, interactive: bool = False) -> Credentials:
@@ -33,6 +39,17 @@ def ensure_user_credentials(*, interactive: bool = False) -> Credentials:
         creds = Credentials.from_authorized_user_file(  # type: ignore[no-untyped-call]
             str(token_path), SCOPES
         )
+
+    # If creds exist but are missing required scopes, force re-auth (or error if non-interactive)
+    if creds and not _has_required_scopes(creds):
+        if interactive:
+            creds = None  # fall through to interactive flow below
+        else:
+            raise RuntimeError(
+                "Gmail token exists but lacks required scopes. Re-run interactive auth once:\n"
+                "  python -c 'from app.google.oauth import ensure_user_credentials as e; e(interactive=True)'.\n"
+                "Then retry your request."
+            )
 
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
@@ -59,3 +76,8 @@ def ensure_user_credentials(*, interactive: bool = False) -> Credentials:
 
 def get_scopes() -> tuple[str, ...]:
     return tuple(SCOPES)
+"""Google OAuth token management for Gmail operations.
+
+Handles both interactive token acquisition and non-interactive refresh.
+Includes a local scope checker to avoid circular imports with `gmail_service`.
+"""

@@ -1,32 +1,32 @@
-<!doctype html>
 <html>
 <head>
   <meta charset="utf-8">
   <title>{{ subject }}</title>
   <meta name="x-preheader" content="{{ preheader }}">
-  <style>
-    body { background: {{ brand.background }}; color: {{ brand.text_color }}; font-family: {{ brand.font_family }}; }
-    .card { background: #ffffff; margin: 0 auto; max-width: {{ brand.content_width_px }}px; border-radius: 8px; padding: 24px 16px; }
-    a { color: {{ brand.primary }}; }
-  </style>
-</head>
-<body>
-  {% include "partials/header.html.j2" %}
-
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
-         style="margin:0 auto;max-width:{{ brand.content_width_px }}px;">
+  </head>
+<body style="background:#FFF; color:#111827; font-family:Arial, Helvetica, sans-serif">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 auto;max-width:{{ brand.content_width_px }}px;">
+  <tr>
+    <td style="padding:24px 16px;text-align:left;">
+      {% if brand.logo_url %}
+        <img src="{{ brand.logo_url }}" alt="{{ brand.name }}" style="height:32px;">
+      {% else %}
+        <div style="font-weight:700;font-size:18px;color:{{ brand.primary | upper }};">{{ brand.name }}</div>
+      {% endif %}
+    </td>
+  </tr>
+</table>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 auto;max-width:{{ brand.content_width_px }}px;">
     <tr>
       <td>
-        <div class="card">
+        <div class="card" style="background:#fff; margin:0 auto; max-width:{{ brand.content_width_px }}px; border-radius:8px; padding:24px 16px">
           {{ body_text | paragraphize | safe }}
-          {% with cta_url=cta_url, cta_text=cta_text %}
-            {% include "partials/button.html.j2" %}
-          {% endwith %}
-        </div>
+{% if cta_text and cta_url %}
+{% include 'partials/button.html.j2' %}
+{% endif %}        </div>
       </td>
     </tr>
   </table>
 
-  {% include "partials/footer.html.j2" %}
-</body>
+{% include 'partials/footer.html.j2' %}</body>
 </html>

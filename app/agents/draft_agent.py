@@ -4,32 +4,44 @@ from app.tools.brand_loader import load_brand
 
 
 class DraftAgent:
+    MAX_BULLETS = 5
+
     def draft(self, req: DraftRequest) -> DraftResponse:
         name = req.recipient.name or req.recipient.email
         brand = load_brand(req.brand_id)
 
-        # Subject: if company is present, "<Purpose Title>: <Company>", else "Welcome: For <name>"
+        # Subject: if company present, "<Purpose Title>: <Company>", else "Welcome: For <name>"
         subject = (
-            f"{req.purpose.title()}: {req.recipient.company}"
+            f"{req.purpose.title()}: {getattr(req.recipient, 'company', None)}"
             if getattr(req.recipient, "company", None)
             else f"Welcome: For {name}"
         )
 
-        bullets = []
+        bullets: list[str] = []
         ctx = req.context or {}
         if isinstance(ctx.get("bullets"), list):
-            bullets = [str(b) for b in ctx["bullets"] if str(b).strip()]
+            bullets = [str(b).strip() for b in ctx["bullets"] if str(b).strip()]
+            if len(bullets) > self.MAX_BULLETS:
+                bullets = bullets[: self.MAX_BULLETS]
 
         lines = [f"Hi {name},", ""]
         if bullets:
             lines.append("Here are a few things to check out:")
             for b in bullets:
                 lines.append(f"- {b}")
-            lines.append("")
+            lines.append("")  # blank line after list
         else:
             lines.append("Thanks for connecting with us!")
             lines.append("")
 
         lines.append(f"Best,\n{brand.name}")
         body_text = "\n".join(lines)
+
         return DraftResponse(subject=subject, body_text=body_text)
+"""Deterministic first-pass drafting agent.
+
+`DraftAgent` creates a quick subject + plaintext body using light heuristics,
+leaving any richer tone/length/purpose-specific shaping to the renderer
+layer and iteration endpoints. The determinism keeps tests stable and makes
+the system predictable when embedded as a tool in other agents.
+"""

@@ -93,3 +93,8 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+"""Project maintenance CLI (brands, checks).
+
+Provides helpers to validate and initialize brand configs and to run
+lint/type/tests in one command during development.
+"""

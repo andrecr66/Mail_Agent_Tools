@@ -71,3 +71,4 @@ def compose_email(
 def to_gmail_raw(msg: EmailMessage) -> str:
     """Base64url for Gmail 'raw' field."""
     return base64.urlsafe_b64encode(msg.as_bytes()).decode("ascii")
+"""MIME composition utilities for building text+HTML emails with attachments."""

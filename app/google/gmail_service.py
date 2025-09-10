@@ -1,3 +1,4 @@
+"""Gmail service factory and scope checks."""
 # mypy: disable-error-code=import-untyped
 from __future__ import annotations
 from typing import Any

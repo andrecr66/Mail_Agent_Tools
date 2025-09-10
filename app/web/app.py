@@ -1,4 +1,6 @@
 from __future__ import annotations
+from pydantic import BaseModel
+from app.agents.interpret import interpret_instructions
 from fastapi import FastAPI, Query
 
 from app.agents.draft_agent import DraftAgent
@@ -6,6 +8,8 @@ from app.agents.types import DraftRequest, DraftResponse
 from app.mail.types import PreviewResponse, SendResult
 from app.mail.workflow import preview as wf_preview, deliver as wf_deliver
 from app.web.cors import install_cors
+from typing import Any, Dict
+
 
 app = FastAPI(title="Mail Agent Tools - Draft API")
 install_cors(app)
@@ -56,3 +60,97 @@ def get_settings() -> dict[str, str]:
         "MAIL_AGENT_GMAIL_LABEL_PREFIX": settings.MAIL_AGENT_GMAIL_LABEL_PREFIX,
         "MAIL_AGENT_BRAND_ID": settings.MAIL_AGENT_BRAND_ID,
     }
+
+
+# ---------- Iteration endpoints for chat-driven review/approval ----------
+class DraftUpdate(BaseModel):
+    subject: str | None = None
+    tone: str | None = None
+    long_form: bool | None = None
+    # If set, replaces the whole bullets list; otherwise we can append with bullets_add
+    bullets_replace: list[str] | None = None
+    bullets_add: list[str] = []
+    cta_text: str | None = None
+    cta_url: str | None = None
+    purpose: str | None = None
+
+
+def _apply_updates(base: DraftRequest, updates: DraftUpdate) -> DraftRequest:
+    ctx = dict(base.context or {})
+    # Subject/tone/long_form feed into renderer via context
+    if updates.subject is not None:
+        ctx["subject"] = updates.subject
+    if updates.tone is not None:
+        ctx["tone"] = updates.tone
+    if updates.long_form is not None:
+        ctx["long_form"] = updates.long_form
+    if updates.bullets_replace is not None:
+        ctx["bullets"] = [b for b in updates.bullets_replace if str(b).strip()]
+    elif updates.bullets_add:
+        existing = [str(b) for b in ctx.get("bullets", []) if str(b).strip()]
+        ctx["bullets"] = existing + [b for b in updates.bullets_add if str(b).strip()]
+    if updates.cta_text is not None:
+        ctx["cta_text"] = updates.cta_text
+    if updates.cta_url is not None:
+        ctx["cta_url"] = updates.cta_url
+    if updates.purpose is not None:
+        base.purpose = updates.purpose
+    base.context = ctx
+    return base
+
+
+@app.post("/draft/iterate", response_model=DraftResponse)
+def draft_iterate(base: DraftRequest, updates: DraftUpdate) -> DraftResponse:
+    req2 = _apply_updates(base, updates)
+    return _agent.draft(req2)
+
+
+@app.post("/draft/iterate/preview", response_model=PreviewResponse)
+def draft_iterate_preview(base: DraftRequest, updates: DraftUpdate) -> PreviewResponse:
+    req2 = _apply_updates(base, updates)
+    data = wf_preview(req2)
+    return PreviewResponse(**data)
+
+
+@app.post("/mail/iterate/deliver", response_model=SendResult)
+def mail_iterate_deliver(
+    base: DraftRequest,
+    updates: DraftUpdate,
+    mode: str = "draft",
+) -> SendResult:
+    req2 = _apply_updates(base, updates)
+    data = wf_deliver(req2, force_action=mode)
+    return SendResult(**data)
+
+
+class NLUpdate(BaseModel):
+    instructions: str
+
+
+@app.post("/draft/iterate/nl", response_model=PreviewResponse)
+def draft_iterate_nl(base: DraftRequest, updates: NLUpdate) -> PreviewResponse:
+    parsed = interpret_instructions(updates.instructions)
+    req2 = _apply_updates(base, DraftUpdate(**parsed))
+    data = wf_preview(req2)
+    return PreviewResponse(**data)
+
+
+@app.post("/mail/iterate/nl-deliver", response_model=SendResult)
+def mail_iterate_nl_deliver(
+    base: DraftRequest, updates: NLUpdate, mode: str = "draft"
+) -> SendResult:
+    parsed = interpret_instructions(updates.instructions)
+    req2 = _apply_updates(base, DraftUpdate(**parsed))
+    data = wf_deliver(req2, force_action=mode)
+    return SendResult(**data)
+"""FastAPI web API for the Mail Agent.
+
+This module exposes endpoints to:
+- draft: Produce a subject/body draft from a `DraftRequest`.
+- mail/preview: Render the brand template and return HTML/Text plus a dry-run plan.
+- mail/deliver: Create a Gmail draft or send immediately.
+- draft/iterate*, mail/iterate*: Apply structured or NL updates to iterate on content.
+
+It keeps request/response shapes small and deterministic so the API is easy to
+consume by other agents and systems.
+"""
