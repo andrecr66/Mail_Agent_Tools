@@ -107,9 +107,12 @@ def interpret_instructions(instructions: str) -> Dict[str, Any]:
         up["tone"] = m.group(1).strip().lower()
 
     # Tone heuristics via keywords
-    if re.search(r"\b(friend(ly|lier)|more\s+friendly|welcom(ing|e))\b", instr, flags=re.I):
+    # Prefer mapping "more friendly / friendlier" to "warm" so the change is visible.
+    if re.search(r"\b(a\s+little\s+(bit\s+)?more\s+friendly|more\s+friendly|friendlier)\b", instr, flags=re.I):
+        up["tone"] = "warm"
+    elif re.search(r"\b(friendly|welcom(ing|e))\b", instr, flags=re.I):
         up.setdefault("tone", "friendly")
-    if re.search(r"\b(warm|warmer|more\s+warm)\b", instr, flags=re.I):
+    if re.search(r"\b(warm|warmer|more\s+warm|more\s+welcoming|more\s+personal|softer|kinder|less\s+formal)\b", instr, flags=re.I):
         up.setdefault("tone", "warm")
     if re.search(r"\b(excit(ed|ing)|more\s+excited|enthusiastic|more\s+enthusiastic)\b", instr, flags=re.I):
         up.setdefault("tone", "enthusiastic")
@@ -117,6 +120,11 @@ def interpret_instructions(instructions: str) -> Dict[str, Any]:
         up.setdefault("tone", "professional")
     if re.search(r"\b(casual|more\s+casual)\b", instr, flags=re.I):
         up.setdefault("tone", "casual")
+
+    # If tone was requested and long_form not specified, enable long_form to
+    # produce a clearly distinct intro in the template.
+    if "tone" in up and "long_form" not in up:
+        up["long_form"] = True
 
     # Length / detail hints
     if re.search(r"\b(short(en)?|more\s+concise|tighter)\b", instr, flags=re.I):
