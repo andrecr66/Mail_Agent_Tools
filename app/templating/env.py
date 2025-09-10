@@ -25,3 +25,9 @@ def render_template(template_path: str, context: Dict[str, Any]) -> str:
     env = jinja_env()
     tpl = env.get_template(template_path)
     return tpl.render(**context)
+"""Jinja2 environment helpers.
+
+Provides a small set of helpers for rendering HTML emails using Jinja2,
+including a `paragraphize` filter that turns newline-separated text into
+HTML paragraphs and <br/> line breaks.
+"""

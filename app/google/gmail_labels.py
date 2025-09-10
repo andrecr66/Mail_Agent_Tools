@@ -33,3 +33,8 @@ def ensure_hierarchy(svc: Resource, parent: str, leaf: str) -> list[str]:
     parent_id = ensure_label(svc, parent)
     leaf_id = ensure_label(svc, f"{parent}/{leaf}")
     return [parent_id, leaf_id]
+"""Helpers for creating and looking up Gmail labels.
+
+We create a small hierarchy `<prefix>/<brand_id>` and apply both labels so
+messages are easy to find under a common parent.
+"""

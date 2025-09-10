@@ -160,3 +160,10 @@ def interpret_instructions(instructions: str) -> Dict[str, Any]:
             up["bullets_add"] = QA_RESPONSIBILITIES
 
     return up
+"""Natural-language instruction interpreter.
+
+Turns short user instructions (e.g., "make it more excited", "replace bullets:")
+into the structured `DraftUpdate` fields consumed by the iteration endpoints.
+This keeps the web API compact and allows the ADK agent to provide a friendly
+editing experience without requiring the user to craft JSON.
+"""

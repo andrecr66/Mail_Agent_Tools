@@ -76,3 +76,8 @@ def ensure_user_credentials(*, interactive: bool = False) -> Credentials:
 
 def get_scopes() -> tuple[str, ...]:
     return tuple(SCOPES)
+"""Google OAuth token management for Gmail operations.
+
+Handles both interactive token acquisition and non-interactive refresh.
+Includes a local scope checker to avoid circular imports with `gmail_service`.
+"""

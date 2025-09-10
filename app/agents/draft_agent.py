@@ -38,3 +38,10 @@ class DraftAgent:
         body_text = "\n".join(lines)
 
         return DraftResponse(subject=subject, body_text=body_text)
+"""Deterministic first-pass drafting agent.
+
+`DraftAgent` creates a quick subject + plaintext body using light heuristics,
+leaving any richer tone/length/purpose-specific shaping to the renderer
+layer and iteration endpoints. The determinism keeps tests stable and makes
+the system predictable when embedded as a tool in other agents.
+"""

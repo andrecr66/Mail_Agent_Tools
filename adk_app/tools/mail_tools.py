@@ -85,3 +85,9 @@ async def deliver_mail_nl(
             json={"base": base, "updates": {"instructions": instructions}},
         )
         return _json_or_error(r)
+"""HTTP client tools used by the ADK agent.
+
+These call into the local API to preview, iterate and deliver messages. They
+intentionally shape errors into simple dicts (e.g., `ok: false`) so the agent
+can react and ask the user for missing fields instead of looping silently.
+"""

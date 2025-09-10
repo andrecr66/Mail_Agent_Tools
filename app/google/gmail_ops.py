@@ -64,3 +64,4 @@ def draft_or_send_message(
     ).execute()
 
     return {"status": action, "id": str(msg_id), "labels_applied": label_ids}
+"""Gmail delivery operations (draft/send + labeling)."""

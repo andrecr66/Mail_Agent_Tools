@@ -1,3 +1,10 @@
+"""Email rendering utilities (HTML + plaintext).
+
+Renders a purpose-aware, brand-themed email using Jinja templates, then:
+- Inlines CSS for better client compatibility.
+- Derives a readable plaintext version for previews.
+The renderer also supports a long-form intro that adapts to the requested tone.
+"""
 # mypy: disable-error-code=import-untyped
 from __future__ import annotations
 from typing import Any

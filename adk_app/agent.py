@@ -68,3 +68,8 @@ root_agent = LlmAgent(
 
 # ADK Web top-level export
 agent = root_agent
+"""ADK agent wiring for the Mail Agent tools.
+
+Defines the top-level `agent` used by `adk web`, including instructions and
+tool bindings for previewing, iterating (structured or NL), and delivering.
+"""

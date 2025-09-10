@@ -95,3 +95,9 @@ def _apply_subject_and_tone(data: dict[str, Any], ctx: dict[str, Any]) -> dict[s
         data["text"] = (long_text + ("\n\n" + orig if orig else "")).strip()
 
     return data
+"""Draft → Render → Deliver orchestration.
+
+This module wires the simple `DraftAgent` to the template renderer and Gmail
+operations. The functions here remain small on purpose so they can be reused
+directly by CLIs, APIs, or other agents.
+"""

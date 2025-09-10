@@ -15,3 +15,4 @@ def install_cors(app: Any) -> None:
         allow_headers=["*"],
         expose_headers=["content-type"],
     )
+"""CORS middleware helper for the FastAPI app."""

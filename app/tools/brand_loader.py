@@ -99,3 +99,8 @@ def load_brand(brand_id: str, base_dir: str | Path = "brands") -> BrandConfig:
         return cfg
     except (ValidationError, ValueError) as e:
         raise ValueError(f"Invalid brand config for '{brand_id}': {e}") from e
+"""Brand configuration loader and validator.
+
+Loads `brands/<id>/brand.json`, injects defaults, and validates semantics
+(e.g., color formats, logo URL scheme). Cached via `lru_cache` for performance.
+"""

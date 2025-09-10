@@ -143,3 +143,14 @@ def mail_iterate_nl_deliver(
     req2 = _apply_updates(base, DraftUpdate(**parsed))
     data = wf_deliver(req2, force_action=mode)
     return SendResult(**data)
+"""FastAPI web API for the Mail Agent.
+
+This module exposes endpoints to:
+- draft: Produce a subject/body draft from a `DraftRequest`.
+- mail/preview: Render the brand template and return HTML/Text plus a dry-run plan.
+- mail/deliver: Create a Gmail draft or send immediately.
+- draft/iterate*, mail/iterate*: Apply structured or NL updates to iterate on content.
+
+It keeps request/response shapes small and deterministic so the API is easy to
+consume by other agents and systems.
+"""

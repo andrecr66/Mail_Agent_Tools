@@ -68,3 +68,9 @@ def main(argv: List[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+"""Developer-facing CLI for previewing and delivering.
+
+This CLI mirrors the web API: it accepts a recipient, purpose, brand and
+optionally a JSON `context`, then either previews or delivers the email.
+Useful for quick local sanity checks and demos.
+"""

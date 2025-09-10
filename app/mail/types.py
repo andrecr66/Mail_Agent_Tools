@@ -16,3 +16,4 @@ class SendResult(BaseModel):
     labels_applied: list[str]
     to: EmailStr
     subject: str
+"""Response models returned by preview and deliver endpoints."""

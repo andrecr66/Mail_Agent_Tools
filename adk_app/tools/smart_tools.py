@@ -229,3 +229,10 @@ async def smart_deliver_nl(
     seeded = _ensure_defaults(base)
     _STATE.update({"base": seeded, "nl": instructions, "updates": None})
     return await deliver_mail_nl(seeded, instructions, mode=mode)
+"""Smart wrappers around API tools.
+
+These helpers normalize loosely-specified inputs (e.g., flat {email,name})
+into a proper `DraftRequest`, seed sensible defaults for bullets/CTA, and
+remember the last updates so a subsequent `deliver` will use what the user
+just approved even if the LLM omits the args.
+"""
