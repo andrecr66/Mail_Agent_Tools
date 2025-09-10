@@ -132,7 +132,16 @@ def render_generic_email(
         "footer_html": footer_html,
         "signature_html": signature_html,
     }
-    raw_html = render_template("families/generic/generic_v1.html.j2", context)
+    # Choose template family by purpose
+    p = (purpose or "generic").lower()
+    if p == "newsletter":
+        tpl_path = "families/newsletter/newsletter_v1.html.j2"
+    elif p == "outreach":
+        tpl_path = "families/outreach/outreach_v1.html.j2"
+    else:
+        tpl_path = "families/generic/generic_v1.html.j2"
+
+    raw_html = render_template(tpl_path, context)
     html = inline_css(raw_html)
     text = to_plain_text(html)
     return html, text

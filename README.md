@@ -7,7 +7,8 @@ Architecture
 - Layers:
   - Web API (FastAPI): endpoints for draft/preview/deliver and iteration.
   - Drafting (DraftAgent): deterministic subject/body seed.
-  - Rendering (Jinja + Premailer): HTML + plaintext, brand aware.
+- Rendering (Jinja + Premailer): HTML + plaintext, brand aware.
+  - Template families by purpose: `generic_v1` (welcome/generic), `newsletter_v1`, `outreach_v1`.
   - Workflow: orchestrates draft → render → preview/deliver.
   - Gmail Ops: OAuth, MIME, labels, draft/send.
   - ADK Agent: tools to use this API in `adk web`.
@@ -107,4 +108,3 @@ Troubleshooting
 
 License
 - © Your project. Add a license if you plan to distribute.
-
